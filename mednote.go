@@ -6,6 +6,8 @@ import "encoding/json"
 import "encoding/base64"
 import "crypto/sha256"
 import "time"
+import "os"
+import "log"
 
 type DatosBasicos struct {
 	NombresPaciente                   string `json:"nombres_paciente"`
@@ -132,9 +134,13 @@ func obtenerCredenciales(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatalln("$PORT must be set")
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", activateCors(datosBasicosHandler))
 	mux.HandleFunc("/url", activateCors(obtenerCredenciales))
-	fmt.Println("Serving in :3030")
-	http.ListenAndServe("0.0.0.0:3030", mux)
+	fmt.Printf("Serving in %s", port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), mux)
 }
