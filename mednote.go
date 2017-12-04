@@ -1,20 +1,34 @@
 package main
 
 import "fmt"
+import "os"
 import "net/http"
 import "encoding/json"
 import "encoding/base64"
 import "crypto/sha256"
 import "time"
-import "os"
 import "log"
+import "database/sql"
+import _ "github.com/lib/pq"
+
+type M map[string]string
+
+func someHandler(w http.ResponseWriter, r *http.Request) {
+	dbName := os.Getenv("DATABASE_URL")
+	_, err := sql.Open("postgres", dbName)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 type DatosBasicos struct {
+	NombreEvento                      string `json:"nombreEvento"`
+	CodigoEvento                      string `json:"codigoEvento"`
 	NombresPaciente                   string `json:"nombres_paciente"`
 	ApellidosPaciente                 string `json:"apellidos_paciente"`
 	TipoIdentificacion                string `json:"tipo_identificacion"`
 	NumeroIdentificacion              int    `json:"numero_identificacion"`
-	Telefono                          string `json:"telefono"`
+	Telefono                          int    `json:"telefono"`
 	SexoPaciente                      string `json:"sexo_paciente"`
 	PaisOcurrencia                    string `json:"pais_ocurrencia"`
 	MunicipioOcurrencia               string `json:"municipio_ocurrencia"`
@@ -76,6 +90,11 @@ type Credenciales struct {
 	NombreUsuario Usuario `json:"nombreUsuario"`
 }
 
+func mainPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(`content-type`, `application/json`)
+	json.NewEncoder(w).Encode(&M{"message": "Hello World"})
+}
+
 func datosBasicosHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		basicos := &DatosBasicos{}
@@ -134,13 +153,14 @@ func obtenerCredenciales(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	port := os.Getenv("PORT")
+	port := "3030" //os.Getenv("PORT")
 	if port == "" {
 		log.Fatalln("$PORT must be set")
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", activateCors(datosBasicosHandler))
+	mux.HandleFunc(`/home`, mainPage)
 	mux.HandleFunc("/url", activateCors(obtenerCredenciales))
+	mux.HandleFunc("/", activateCors(datosBasicosHandler))
 	fmt.Printf("Serving in %s", port)
 	http.ListenAndServe(fmt.Sprintf(":%s", port), mux)
 }
