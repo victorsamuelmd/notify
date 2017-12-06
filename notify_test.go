@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -77,7 +78,7 @@ func TestDatosBasicosHandler(t *testing.T) {
 	}
 
 	mapper := DatosBasicos{}
-	id := bson.ObjectIdHex(res.Body.String())
+	id := bson.ObjectIdHex(strings.Trim(res.Body.String(), `'"'`))
 	err = session.DB("test").C("datosBasicos").FindId(id).One(&mapper)
 	if err != nil {
 		t.Fatal(id, err)

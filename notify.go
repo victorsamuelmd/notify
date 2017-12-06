@@ -118,7 +118,7 @@ func (s *server) datosBasicosHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprint(w, basicos.ID.Hex())
+		fmt.Fprintf(w, `"%s"`, basicos.ID.Hex())
 	}
 }
 
@@ -190,8 +190,9 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc(fmt.Sprintf(`/verdatosbasicos/{%s}.json`, datosBasicosIdUrl), handler.mostrarDatosBasicos)
-	r.HandleFunc(fmt.Sprintf(`/verdatosbasicos/{%s}.svg`, datosBasicosIdUrl), handler.mostrarDatosBasicosSVG)
+	r.HandleFunc(fmt.Sprintf(`/verdatosbasicos/{%s}`, datosBasicosIdUrl), handler.mostrarDatosBasicosSVG)
 	r.HandleFunc("/datosbasicos", activateCors(handler.datosBasicosHandler))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 
 	fmt.Printf("Serving in %s", port)
 
