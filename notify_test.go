@@ -30,8 +30,8 @@ var fichaTest = DatosBasicos{
 	"Santa Monica",
 	"",
 	"",
-	"CabeceraMunicipa",
-	"Medicos Generales",
+	"CabeceraMunicipal",
+	"1234",
 	"Contributivo",
 	"Nueva EPS",
 	"Otro",
@@ -39,7 +39,7 @@ var fichaTest = DatosBasicos{
 	true,
 	"Risaralda", "Pereira", "Crr 11 bis No. 1-05", time.Unix(1512491920, 0),
 	time.Unix(1512491920, 0),
-	"Sospechoso",
+	"CasoProbable",
 	false,
 	time.Unix(0, 0),
 	"Vivo",
@@ -73,8 +73,9 @@ func TestDatosBasicosHandler(t *testing.T) {
 	handler.ServeHTTP(res, req)
 
 	if status := res.Code; status != http.StatusOK {
-		t.Errorf(`handler returned wrong status code: expected %v got %v`,
-			http.StatusOK, status)
+		t.Errorf(`handler returned wrong status code: expected %v got %v: with message %v`,
+			http.StatusOK, status, res.Body.String())
+		return
 	}
 
 	mapper := DatosBasicos{}

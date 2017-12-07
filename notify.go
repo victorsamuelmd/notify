@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/go-ozzo/ozzo-validation"
 	"github.com/gorilla/mux"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -72,6 +73,72 @@ type DatosBasicos struct {
 	CausaBasicaMuerte                 string        `json:"causa_basica_muerte" bson:"causa_basica_muerte"`
 }
 
+func (b DatosBasicos) Validate() error {
+	return validation.ValidateStruct(&b,
+		validation.Field(&b.NombreEvento, validation.Required, validation.Length(3, 200)),
+		validation.Field(&b.CodigoEvento, validation.Required, validation.Length(3, 3)),
+		validation.Field(&b.NombresPaciente, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.ApellidosPaciente, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.TipoIdentificacion, validation.Required, validation.In(
+			"CedulaCiudadania",
+			"CedulaExtranjeria",
+			"TarjetaIdentidad",
+			"RegistroCivil",
+			"AdultoSinIdentificacion",
+			"MenorSinIdentificacion",
+		)),
+		validation.Field(&b.SexoPaciente, validation.Required, validation.In(
+			"Masculino",
+			"Femenino",
+			"Indeterminado",
+		).Error(fmt.Sprintf("Expected one of Masculino, Femenino, Indeterminado, got: %s", b.SexoPaciente))),
+		validation.Field(&b.PaisOcurrencia, validation.Required, validation.Length(2, 2)),
+		validation.Field(&b.DepartamentoOcurrenciaCaso, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.MunicipioOcurrencia, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.BarrioOcurrenciaCaso, validation.Length(0, 60)),
+		validation.Field(&b.LocalidadOcurrenciaCaso, validation.Length(0, 60)),
+		validation.Field(&b.CabeceraCentroRuralOcurrenciaCaso, validation.Length(0, 60)),
+		validation.Field(&b.VeredaZonaOcurrenciaCaso, validation.Length(0, 60)),
+		validation.Field(&b.AreaOcurrenciaCaso, validation.Required, validation.In(
+			"CabeceraMunicipal",
+			"RuralDisperso",
+			"CentroPoblado",
+		)),
+		validation.Field(&b.OcupacionPaciente, validation.Required, validation.Length(4, 4)),
+		validation.Field(&b.TipoRegimenSalud, validation.Required, validation.In(
+			"Subsidiado",
+			"Excepcion",
+			"Especial",
+			"Contributivo",
+			"NoAsegurado",
+			"RegimenIndeterminado",
+		)),
+		validation.Field(&b.PertenenciaEtnica, validation.Required, validation.In(
+			"Indigena",
+			"RomGitano",
+			"Raizal",
+			"Palenquero",
+			"NegroMulatoAfrocolombiano",
+			"Otro",
+		)),
+		validation.Field(&b.DepartamentoResidencia, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.MunicipioResidencia, validation.Required, validation.Length(2, 60)),
+		validation.Field(&b.ClasificacionInicialCaso, validation.Required, validation.In(
+			"CasoProbable",
+			"CasoSospechoso",
+			"ConfirmacionClinica",
+			"ConfirmacionEpidemiologia",
+			"ConfirmacionLaboratorio",
+		)),
+		validation.Field(&b.CondicionFinal, validation.Required, validation.In(
+			"Vivo",
+			"Muerto",
+			"NoSabeCondicionFinal",
+		)),
+		validation.Field(&b.CausaBasicaMuerte, validation.Length(0, 100)),
+	)
+}
+
 type server struct {
 	DB     *mgo.Session
 	dbName string
@@ -108,6 +175,12 @@ func (s *server) datosBasicosHandler(w http.ResponseWriter, r *http.Request) {
 
 		basicos.ID = bson.NewObjectId()
 		basicos.FechaNotificacion = time.Now()
+
+		err = basicos.Validate()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		db := s.DB.Clone()
 		defer db.Close()

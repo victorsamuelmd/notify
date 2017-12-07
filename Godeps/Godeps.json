@@ -4,6 +4,11 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/go-ozzo/ozzo-validation",
+			"Comment": "v3.3",
+			"Rev": "85dcd8368eba387e65a03488b003e233994e87e9"
+		},
+		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Comment": "v1.6.0-3-g65ec724",
 			"Rev": "65ec7248c53f499f6b480655e019e0b9d7a6ce11"
